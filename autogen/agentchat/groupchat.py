@@ -236,7 +236,6 @@ class GroupChatManager(ConversableAgent):
         max_consecutive_auto_reply: Optional[int] = sys.maxsize,
         human_input_mode: Optional[str] = "NEVER",
         system_message: Optional[str] = "Group chat manager.",
-        graph: Optional[Dict] = None,
         **kwargs,
     ):
         super().__init__(
@@ -272,8 +271,11 @@ class GroupChatManager(ConversableAgent):
             # broadcast the message to all agents except the speaker
             for agent in groupchat.agents:
                 # todo:只通知给下游就行，不用通知给所有人
-
-                if agent != speaker:
+                if groupchat.graph is not None:
+                    agent_list = groupchat.graph[agent.name]
+                    for agent_name in agent_list:
+                        self.send(message, agent_name, request_reply=False, silent=True)
+                elif agent != speaker:
                     self.send(message, agent, request_reply=False, silent=True)
 
             if i == groupchat.max_round - 1:
