@@ -38,6 +38,8 @@ class GroupChat:
     func_call_filter: bool = True
     speaker_selection_method: str = "auto"
     allow_repeat_speaker: bool = True
+    graph: Optional[Dict] = None
+    rules: List[Agent] = None
 
     _VALID_SPEAKER_SELECTION_METHODS = ["auto", "manual", "random", "round_robin"]
 
@@ -63,6 +65,13 @@ class GroupChat:
             for i in range(len(self.agents)):
                 if self.agents[(offset + i) % len(self.agents)] in agents:
                     return self.agents[(offset + i) % len(self.agents)]
+
+    def next_group_agent(self, agent: Agent) -> Agent:
+        """Return the next group agent in the list."""
+        if self.rules is None:
+            return self.next_agent(agent, self.agents)
+        else:
+            return self.rules[self.agent_names.index(agent.name)]
 
     def select_speaker_msg(self, agents: List[Agent]):
         """Return the message for selecting the next speaker."""
@@ -152,6 +161,8 @@ Then select the next role from {[agent.name for agent in agents]} to play. Only 
             return self.next_agent(last_speaker, agents)
         elif self.speaker_selection_method.lower() == "random":
             return random.choice(agents)
+        elif self.speaker_selection_method.lower() == "graph": # 有向图
+            return self.next_group_agent(last_speaker)
 
         # auto speaker selection
         selector.update_system_message(self.select_speaker_msg(agents))
@@ -225,6 +236,7 @@ class GroupChatManager(ConversableAgent):
         max_consecutive_auto_reply: Optional[int] = sys.maxsize,
         human_input_mode: Optional[str] = "NEVER",
         system_message: Optional[str] = "Group chat manager.",
+        graph: Optional[Dict] = None,
         **kwargs,
     ):
         super().__init__(
@@ -259,8 +271,11 @@ class GroupChatManager(ConversableAgent):
             groupchat.messages.append(message)
             # broadcast the message to all agents except the speaker
             for agent in groupchat.agents:
+                # todo:只通知给下游就行，不用通知给所有人
+
                 if agent != speaker:
                     self.send(message, agent, request_reply=False, silent=True)
+
             if i == groupchat.max_round - 1:
                 # the last round
                 break
