@@ -191,7 +191,7 @@ Reply "TERMINATE" in the end when everything is done.
         if messages is None:
             messages = self._oai_messages[sender]
 
-        for reply_func_tuple in self._reply_func_list:
+        for reply_func_tuple in self. _reply_func_list:
             reply_func = reply_func_tuple["reply_func"]
             if exclude and reply_func in exclude:
                 continue

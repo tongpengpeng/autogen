@@ -41,7 +41,7 @@ class GroupChat:
     graph: Optional[Dict] = None
     rules: List[Agent] = None
 
-    _VALID_SPEAKER_SELECTION_METHODS = ["auto", "manual", "random", "round_robin"]
+    _VALID_SPEAKER_SELECTION_METHODS = ["auto", "manual", "random", "round_robin", "graph"]
 
     @property
     def agent_names(self) -> List[str]:
